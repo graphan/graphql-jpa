@@ -14,10 +14,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.SingularAttribute;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ExtendedJpaDataFetcher extends JpaDataFetcher {
@@ -72,18 +69,24 @@ public class ExtendedJpaDataFetcher extends JpaDataFetcher {
     }
 
     private PageInformation extractPageInformation(DataFetchingEnvironment environment, Field field) {
-        Optional<Argument> paginationRequest = field.getArguments().stream().filter(it -> GraphQLSchemaBuilder.PAGINATION_REQUEST_PARAM_NAME.equals(it.getName())).findFirst();
-        if (paginationRequest.isPresent()) {
-            field.getArguments().remove(paginationRequest.get());
+        Integer page = 1;
+        Integer size = Integer.MAX_VALUE;
+        Iterator<Object> paginationRequest = environment.getArguments().values().iterator();
 
-            ObjectValue paginationValues = (ObjectValue) paginationRequest.get().getValue();
-            IntValue page = (IntValue) paginationValues.getObjectFields().stream().filter(it -> "page".equals(it.getName())).findFirst().get().getValue();
-            IntValue size = (IntValue) paginationValues.getObjectFields().stream().filter(it -> "size".equals(it.getName())).findFirst().get().getValue();
-
-            return new PageInformation(page.getValue().intValue(), size.getValue().intValue());
+        if(paginationRequest.hasNext()){
+            Iterator<Object> paginationArgs = ((LinkedHashMap) paginationRequest.next()).entrySet().iterator();
+            while(paginationArgs.hasNext()) {
+                Map.Entry<String, Integer> argument = (Map.Entry<String, Integer>) paginationArgs.next();
+                if(argument.getKey().equals("page")) {
+                    page = argument.getValue();
+                }
+                if(argument.getKey().equals("size")) {
+                    size = argument.getValue();
+                }
+            }
         }
 
-        return new PageInformation(1, Integer.MAX_VALUE);
+        return new PageInformation(page, size);
     }
 
     private static final class PageInformation {
