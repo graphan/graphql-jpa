@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.CrossOrigin
 
 @RestController
 @CompileStatic
@@ -19,6 +20,7 @@ class GraphQlController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @RequestMapping(path = '/graphql', method = RequestMethod.POST)
     ExecutionResult graphQl(@RequestBody final GraphQLInputQuery query) {
         Map<String, Object> variables = query.getVariables() ? objectMapper.readValue(query.getVariables(), Map) : null;
